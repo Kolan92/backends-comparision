@@ -1,0 +1,13 @@
+GET http://localhost:8080/api/hello/world HTTP/1.1
+
+GET http://localhost:8080/api/hello/web HTTP/1.1
+
+
+POST http://localhost:8080/api/bmi HTTP/1.1
+content-type: application/json
+
+{
+    "height": 180,
+    "weight": 80, 
+	"measuredOn": "2020-02-09T17:23:07Z"
+}
