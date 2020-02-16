@@ -25,11 +25,6 @@ const (
 	dbname   = "testdatabase"
 )
 
-type PersonalInfo struct {
-	Name      string
-	BirthDate time.Time
-}
-
 type BodyInfo struct {
 	Height     int       `json:"height"`
 	Weight     int       `json:"weight"`
@@ -41,8 +36,9 @@ func parseBody(request *http.Request, value *BodyInfo) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("%#v\n", body)
 	err = json.Unmarshal(body, value)
-	fmt.Printf("%#v", value)
+	fmt.Printf("%#v\n", value)
 	return err
 }
 
@@ -58,8 +54,6 @@ func saveBodyInfo(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	fmt.Printf("%#v", bodyInfo)
 
 	writeBodyInfoToDb(&bodyInfo)
 

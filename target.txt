@@ -1,0 +1,3 @@
+POST http://localhost:8080/api/bmi
+Content-Type: application/json
+@example_body.json
