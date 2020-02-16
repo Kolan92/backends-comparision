@@ -14,6 +14,8 @@ import (
 
 	"time"
 
+	"sync"
+
 	_ "github.com/lib/pq"
 )
 
@@ -29,6 +31,20 @@ type BodyInfo struct {
 	Height     int       `json:"height"`
 	Weight     int       `json:"weight"`
 	MeasuredOn time.Time `json:"measuredOn"`
+}
+
+var conn *sql.DB // Set package-wide, but not exported
+var once sync.Once
+
+func GetConnection() *sql.DB {
+	once.Do(func() {
+		var err error
+		if conn, err = sql.Open("postgres", connectionString); err != nil {
+			log.Panic(err)
+		}
+
+	})
+	return conn
 }
 
 func parseBody(request *http.Request, value *BodyInfo) error {
@@ -55,7 +71,14 @@ func saveBodyInfo(w http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	writeBodyInfoToDb(&bodyInfo)
+	db := GetConnection()
+
+	//defer db.Close()
+	//	writeBodyInfoToDb(&bodyInfo, db)
+	for i := 0; i < 10; i++ {
+		fmt.Printf("%d gorutines!\n", i+1)
+		go writeBodyInfoToDb(&bodyInfo, db)
+	}
 
 	json, err := json.Marshal(bodyInfo)
 	if err != nil {
@@ -66,14 +89,8 @@ func saveBodyInfo(w http.ResponseWriter, request *http.Request) {
 	w.Write(json)
 }
 
-func writeBodyInfoToDb(value *BodyInfo) {
-	db, err := sql.Open("postgres", connectionString)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	err = db.Ping()
+func writeBodyInfoToDb(value *BodyInfo, db *sql.DB) {
+	err := db.Ping()
 	if err != nil {
 		panic(err)
 	}
@@ -81,16 +98,17 @@ func writeBodyInfoToDb(value *BodyInfo) {
 	var insertCommand string = "insert into body_info (measuredOn, weight_kg, height_cm) values ($1, $2, $3)"
 
 	stmt, err := db.Prepare(insertCommand)
-    if err != nil {
-      log.Fatal(err)
-    }
- 
-    res, err := stmt.Exec(value.MeasuredOn, value.Weight, value.Height)
-    if err != nil || res == nil {
-      log.Fatal(err)
-    }
- 
-    stmt.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, err := stmt.Exec(value.MeasuredOn, value.Weight, value.Height)
+	if err != nil || res == nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Inserted row successfully")
+	stmt.Close()
+
 }
 
 var connectionString string
@@ -101,7 +119,7 @@ func main() {
 	// 	log.Fatal("No connection string")
 	// }
 
-	 fmt.Println("Starting the server...")
+	fmt.Println("Starting the server!")
 
 	// connectionString := os.Args[1]
 	// fmt.Println(connectionString)
