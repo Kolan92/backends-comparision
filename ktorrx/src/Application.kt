@@ -1,8 +1,8 @@
 package com.ktorrx
 
 import com.fatboyindustrial.gsonjodatime.Converters
+import com.github.jasync.sql.db.asSuspending
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
-import com.google.gson.GsonBuilder
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -21,13 +21,10 @@ import io.ktor.server.netty.EngineMain
 import io.reactivex.Flowable
 import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactive.collect
-import org.joda.time.DateTime
-import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
 
-data class BodyInfo (val weight: Double, val height: Double, val measuredOn: DateTime)
-val insertQuery = "insert into body_info (measuredOn, weight_kg, height_cm) values (?,?,?)"
+val insertQuery = "insert into body_info (measured_on, weight_kg, height_cm) values (?,?,?)"
 
 fun main(args: Array<String>) {
     EngineMain.main(args)
@@ -43,7 +40,6 @@ fun Application.module(testing: Boolean = false) {
     install(ContentNegotiation) {
         gson {
             Converters.registerDateTime(this)
-
         }
     }
 
@@ -76,8 +72,16 @@ fun Application.module(testing: Boolean = false) {
 
         post("/api/bmi") {
             val bodyInfo = call.receive<BodyInfo>()
-            //val result = connectionPool.connect().get().asSuspending
-             //   .sendPreparedStatement(insertQuery, listOf(bodyInfo.weight, bodyInfo.height, bodyInfo.measuredOn))
+            val result = connectionPool.connect().get().asSuspending
+                .let {
+                    for (i in 1..10) {
+                        it.sendPreparedStatement(
+                            insertQuery,
+                            listOf(bodyInfo.measuredOn, bodyInfo.weight, bodyInfo.height)
+                        )
+                    }
+                }
+
 
                call.respond(bodyInfo)
             }

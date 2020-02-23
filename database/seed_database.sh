@@ -11,12 +11,14 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
   \c testdatabase 
 
   CREATE TABLE body_info (
-    measuredOn  TIMESTAMPTZ   NOT NULL,
+    measured_on  TIMESTAMPTZ   NOT NULL,
     weight_kg   NUMERIC       NOT NULL,
     height_cm   NUMERIC       NOT NULL
   );
 
-  SELECT create_hypertable('body_info', 'time');
+  \dt body_info
+  \d body_info
+  SELECT create_hypertable('body_info', 'measured_on');
 
 EOSQL
 

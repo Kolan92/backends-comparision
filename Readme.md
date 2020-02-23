@@ -15,3 +15,13 @@ vegeta attack -duration=60s -rate=100 -targets=target.txt | tee golang_results.b
   cat golang_results.bin | vegeta report -type="hist[0,100ms,200ms,300ms]"
 
 ```
+
+Simple run for the ktorrx backend: 
+
+```bash
+vegeta attack -duration=60s -rate=100 -targets=target.txt | tee ktorrx_results.bin | vegeta report
+  vegeta report -type=json ktorrx_results.bin > ktorrx_metrics.json
+  cat ktorrx_results.bin | vegeta plot > ktorrx_plot.html
+  cat ktorrx_results.bin | vegeta report -type="hist[0,100ms,200ms,300ms]"
+
+```

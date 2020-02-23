@@ -95,7 +95,7 @@ func writeBodyInfoToDb(value *BodyInfo, db *sql.DB) {
 		panic(err)
 	}
 
-	var insertCommand string = "insert into body_info (measuredOn, weight_kg, height_cm) values ($1, $2, $3)"
+	var insertCommand string = "insert into body_info (measured_on, weight_kg, height_cm) values ($1, $2, $3)"
 
 	stmt, err := db.Prepare(insertCommand)
 	if err != nil {
