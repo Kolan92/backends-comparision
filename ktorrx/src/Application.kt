@@ -1,21 +1,40 @@
 package com.ktorrx
 
-import io.ktor.application.*
-import io.ktor.response.*
-import io.ktor.features.*
-import io.ktor.routing.*
-import io.ktor.gson.*
+import com.fatboyindustrial.gsonjodatime.Converters
+import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
+import com.google.gson.GsonBuilder
+import io.ktor.application.Application
+import io.ktor.application.call
+import io.ktor.application.install
+import io.ktor.features.ContentNegotiation
+import io.ktor.features.DefaultHeaders
+import io.ktor.gson.gson
 import io.ktor.http.ContentType
+import io.ktor.request.receive
+import io.ktor.response.respond
+import io.ktor.response.respondText
+import io.ktor.response.respondTextWriter
+import io.ktor.routing.get
+import io.ktor.routing.post
+import io.ktor.routing.routing
+import io.ktor.server.netty.EngineMain
+import io.reactivex.Flowable
+import kotlinx.coroutines.reactive.awaitLast
+import kotlinx.coroutines.reactive.collect
+import org.joda.time.DateTime
+import java.time.LocalTime
+import java.util.concurrent.TimeUnit
 
-import io.reactivex.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.reactive.*
-import java.util.concurrent.*
 
-fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
+data class BodyInfo (val weight: Double, val height: Double, val measuredOn: DateTime)
+val insertQuery = "insert into body_info (measuredOn, weight_kg, height_cm) values (?,?,?)"
+
+fun main(args: Array<String>) {
+    EngineMain.main(args)
+}
 
 @Suppress("unused") // Referenced in application.conf
-@kotlin.jvm.JvmOverloads
+@JvmOverloads
 fun Application.module(testing: Boolean = false) {
     install(DefaultHeaders) {
         header("X-Engine", "Ktor") // will send this header with each response
@@ -23,6 +42,8 @@ fun Application.module(testing: Boolean = false) {
 
     install(ContentNegotiation) {
         gson {
+            Converters.registerDateTime(this)
+
         }
     }
 
@@ -49,10 +70,30 @@ fun Application.module(testing: Boolean = false) {
                     .collect {
                         writer.write("$it,")
                         writer.flush()
-                        delay(100L)
                     }
             }
         }
-    }
+
+        post("/api/bmi") {
+            val bodyInfo = call.receive<BodyInfo>()
+            //val result = connectionPool.connect().get().asSuspending
+             //   .sendPreparedStatement(insertQuery, listOf(bodyInfo.weight, bodyInfo.height, bodyInfo.measuredOn))
+
+               call.respond(bodyInfo)
+            }
+        }
+
+}
+
+val connectionPool = PostgreSQLConnectionBuilder.createConnectionPool{
+    username = "postgres"
+    host = "172.18.0.5"
+    port = 5432
+    password = "postgres"
+    database = "testdatabase"
+    maxActiveConnections = 100
+    maxIdleTime = TimeUnit.MINUTES.toMillis(15)
+    maxPendingQueries = 10_000
+    connectionValidationInterval = TimeUnit.SECONDS.toMillis(30)
 }
 
