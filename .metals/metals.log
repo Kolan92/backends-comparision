@@ -1,0 +1,6 @@
+INFO  started: Metals version 0.8.0 in workspace '/home/pk/Git/backends-comparision'
+INFO  time: initialize in 6.27s
+WARN  no build tool detected in workspace '/home/pk/Git/backends-comparision'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. 
+Feb 22, 2020 5:48:28 PM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
+INFO: Unsupported notification method: $/setTraceNotification
+INFO  shutting down Metals
